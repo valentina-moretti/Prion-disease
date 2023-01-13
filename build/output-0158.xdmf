@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="2.0">
+  <Domain>
+    <Grid Name="CellTime" GridType="Collection" CollectionType="Temporal">
+      <Grid Name="mesh" GridType="Uniform">
+        <Time Value="15.8"/>
+        <Geometry GeometryType="XYZ">
+          <DataItem Dimensions="3000 3" NumberType="Float" Precision="8" Format="HDF">
+            output-0158.h5:/nodes
+          </DataItem>
+        </Geometry>
+        <Topology TopologyType="Tetrahedron" NumberOfElements="750">
+          <DataItem Dimensions="750 4" NumberType="UInt" Format="HDF">
+            output-0158.h5:/cells
+          </DataItem>
+        </Topology>
+        <Attribute Name="partitioning" AttributeType="Scalar" Center="Node">
+          <DataItem Dimensions="3000 1" NumberType="Float" Precision="8" Format="HDF">
+            output-0158.h5:/partitioning
+          </DataItem>
+        </Attribute>
+        <Attribute Name="u" AttributeType="Scalar" Center="Node">
+          <DataItem Dimensions="3000 1" NumberType="Float" Precision="8" Format="HDF">
+            output-0158.h5:/u
+          </DataItem>
+        </Attribute>
+      </Grid>
+    </Grid>
+  </Domain>
+</Xdmf>

@@ -1,0 +1,3 @@
+/home/jellyfish/shared-folder/Prion-disease/Prion-disease/build/CMakeFiles/rebuild_cache.dir
+/home/jellyfish/shared-folder/Prion-disease/Prion-disease/build/CMakeFiles/edit_cache.dir
+/home/jellyfish/shared-folder/Prion-disease/Prion-disease/build/CMakeFiles/main.dir
