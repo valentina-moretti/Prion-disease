@@ -46,7 +46,7 @@ public:
   public:
     virtual double
     value(const Point<dim> & /*p*/, const unsigned int /*component*/ = 0) const override {
-      return 2.0;
+      return 4.0;
     }
   };
 
@@ -109,7 +109,7 @@ protected:
   // Final time.
   const double T;
 
-  const double D = 0.0004;
+  const double D = 0.0004*4;
 
   // Discretization. ///////////////////////////////////////////////////////////
 
