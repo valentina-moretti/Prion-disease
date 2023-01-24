@@ -15,7 +15,9 @@
 #include <deal.II/fe/fe_values_extractors.h>
 #include <deal.II/fe/mapping_fe.h>
 
+#include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/tria.h>
 
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/trilinos_precondition.h>
@@ -31,62 +33,44 @@
 using namespace dealii;
 
 // Class representing the non-linear diffusion problem.
-class HeatNonLinear
-{
+class HeatNonLinear {
 public:
   // Physical dimension (1D, 2D, 3D)
   static constexpr unsigned int dim = 3;
 
   // Function for the mu_0 coefficient.
-  class FunctionAlpha : public Function<dim>
-  {
+  class FunctionAlpha : public Function<dim> {
   public:
     virtual double
-    value(const Point<dim> & /*p*/,
-          const unsigned int /*component*/ = 0) const override
-    {
+    value(const Point<dim> & /*p*/, const unsigned int /*component*/ = 0) const override {
       return 2.0;
     }
   };
 
+  Tensor<2, dim>
+  SpreadingTensor() {
+    Tensor<2, dim> result;
 
+      // duex / dx
+      for (unsigned int i = 1; i < dim + 1; ++i) {
+          for (unsigned int j = 1; j < dim + 1; ++j) {
+            if (i != j)
+              result[i][j] = 0.0002;
+            else
+              result[i][j] = 0.0004;
+          }
+      }
 
-  
-  // Function for the forcing term.
-  class FunctionSpreading : public Function<dim>
-  {
-  public:
-    FunctionSpreading()
-      : Function<dim>(dim)
-    {}
-
-    virtual void
-    vector_value(const Point<dim> &p, Vector<double> &values) const override
-    {
-      for (unsigned int i = 0; i < dim ; ++i)
-        values[i] = 0.0002;
-    }
-
-    virtual double
-    value(const Point<dim> &p, const unsigned int component = 0) const override
-    {
-      
-      return 0.0002;
-    
-    }
-  };
-
-
-
+    return result;
+  }
 
   // Function for initial conditions.
-  class FunctionU0 : public Function<dim>
-  {
+  class FunctionU0 : public Function<dim> {
   public:
     virtual double
-    value(const Point<dim> & /*p*/,
-          const unsigned int /*component*/ = 0) const override
-    {
+    value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
+      if (p[0] == 0.0 /* && p[1] == 0.5 && p[2] == 0.5*/)
+        return 0.1;
       return 0.0;
     }
   };
@@ -95,17 +79,12 @@ public:
   // parameter as constructor arguments.
   HeatNonLinear(const unsigned int &N_,
                 const unsigned int &r_,
-                const double &      T_,
-                const double &      deltat_)
-    : mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD))
-    , mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD))
-    , pcout(std::cout, mpi_rank == 0)
-    , T(T_)
-    , N(N_)
-    , r(r_)
-    , deltat(deltat_)
-    , mesh(MPI_COMM_WORLD)
-  {}
+                const double       &T_,
+                const double       &deltat_) :
+    mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)),
+    mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)),
+    pcout(std::cout, mpi_rank == 0), T(T_), N(N_), r(r_), deltat(deltat_),
+    mesh(MPI_COMM_WORLD) {}
 
   // Initialization.
   void
@@ -147,8 +126,6 @@ protected:
 
   // mu_0 coefficient.
   FunctionAlpha alpha;
-
-  FunctionSpreading spreading;
 
   // Initial conditions.
   FunctionU0 u_0;
