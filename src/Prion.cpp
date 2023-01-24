@@ -4,78 +4,69 @@ void
 HeatNonLinear::setup() {
   // Create the mesh.
   {
-    pcout << "Initializing the mesh" << std::endl;
-    Triangulation<dim> mesh_serial;
-    // GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, -1.0, 1.0, true);
+    
+    std::cout << "Initializing the mesh" << std::endl;
+    GridGenerator::subdivided_hyper_cube(mesh, N + 1, 0.0, 1.0, true);
+    std::cout << "  Number of elements = " << mesh.n_active_cells()
+              << std::endl;
 
-    GridIn<dim> grid_in;
-    grid_in.attach_triangulation(mesh_serial);
-    const std::string mesh_file_name = "../mesh/mesh-cube-40.msh";
-    std::ifstream     grid_in_file(mesh_file_name);
-    grid_in.read_msh(grid_in_file);
-
-    GridTools::partition_triangulation(mpi_size, mesh_serial);
-    const auto construction_data =
-      TriangulationDescription::Utilities::create_description_from_triangulation(
-        mesh_serial, MPI_COMM_WORLD);
-    mesh.create_triangulation(construction_data);
-
-    pcout << "  Number of elements = " << mesh.n_global_active_cells() << std::endl;
+    // Write the mesh to file.
+    const std::string mesh_file_name = "mesh-" + std::to_string(N + 1) + ".vtk";
+    GridOut           grid_out;
+    std::ofstream     grid_out_file(mesh_file_name);
+    grid_out.write_vtk(mesh, grid_out_file);
+    std::cout << "  Mesh saved to " << mesh_file_name << std::endl;
   }
 
-  pcout << "-----------------------------------------------" << std::endl;
+  std::cout << "-----------------------------------------------" << std::endl;
 
   // Initialize the finite element space.
   {
-    pcout << "Initializing the finite element space" << std::endl;
+    std::cout << "Initializing the finite element space" << std::endl;
 
-    fe = std::make_unique<FE_SimplexP<dim>>(r);
+    fe = std::make_unique<FE_Q<dim>>(r);
 
-    pcout << "  Degree                     = " << fe->degree << std::endl;
-    pcout << "  DoFs per cell              = " << fe->dofs_per_cell << std::endl;
+    std::cout << "  Degree                     = " << fe->degree << std::endl;
+    std::cout << "  DoFs per cell              = " << fe->dofs_per_cell << std::endl;
 
-    quadrature = std::make_unique<QGaussSimplex<dim>>(r + 1);
+    quadrature = std::make_unique<QGauss<dim>>(r + 1);
 
-    pcout << "  Quadrature points per cell = " << quadrature->size() << std::endl;
+    std::cout << "  Quadrature points per cell = " << quadrature->size() << std::endl;
   }
 
-  pcout << "-----------------------------------------------" << std::endl;
+  std::cout << "-----------------------------------------------" << std::endl;
 
   // Initialize the DoF handler.
   {
-    pcout << "Initializing the DoF handler" << std::endl;
+    std::cout << "Initializing the DoF handler" << std::endl;
 
     dof_handler.reinit(mesh);
     dof_handler.distribute_dofs(*fe);
 
-    locally_owned_dofs = dof_handler.locally_owned_dofs();
-    DoFTools::extract_locally_relevant_dofs(dof_handler, locally_relevant_dofs);
-
-    pcout << "  Number of DoFs = " << dof_handler.n_dofs() << std::endl;
+    std::cout << "  Number of DoFs = " << dof_handler.n_dofs() << std::endl;
   }
 
-  pcout << "-----------------------------------------------" << std::endl;
+  std::cout << "-----------------------------------------------" << std::endl;
 
   // Initialize the linear system.
   {
-    pcout << "Initializing the linear system" << std::endl;
+    std::cout << "Initializing the linear system" << std::endl;
 
-    pcout << "  Initializing the sparsity pattern" << std::endl;
+    std::cout << "  Initializing the sparsity pattern" << std::endl;
+    DynamicSparsityPattern dsp(dof_handler.n_dofs());
+    DoFTools::make_sparsity_pattern(dof_handler, dsp);
+    sparsity_pattern.copy_from(dsp);
 
-    TrilinosWrappers::SparsityPattern sparsity(locally_owned_dofs, MPI_COMM_WORLD);
-    DoFTools::make_sparsity_pattern(dof_handler, sparsity);
-    sparsity.compress();
+    std::cout << "  Initializing the matrices" << std::endl;
+    jacobian_matrix.reinit(sparsity_pattern);
 
-    pcout << "  Initializing the matrices" << std::endl;
-    jacobian_matrix.reinit(sparsity);
+    std::cout << "  Initializing the system right-hand side" << std::endl;
+    residual_vector.reinit(dof_handler.n_dofs());
+    std::cout << "  Initializing the solution vector" << std::endl;
+    solution_old.reinit(dof_handler.n_dofs());
+    delta.reinit(dof_handler.n_dofs());
 
-    pcout << "  Initializing the system right-hand side" << std::endl;
-    residual_vector.reinit(locally_owned_dofs, MPI_COMM_WORLD);
-    pcout << "  Initializing the solution vector" << std::endl;
-    solution_owned.reinit(locally_owned_dofs, MPI_COMM_WORLD);
-    delta_owned.reinit(locally_owned_dofs, MPI_COMM_WORLD);
-
-    solution.reinit(locally_owned_dofs, locally_relevant_dofs, MPI_COMM_WORLD);
+    solution.reinit(dof_handler.n_dofs());
     solution_old = solution;
   }
 }
@@ -102,8 +93,6 @@ HeatNonLinear::assemble_system() {
   std::vector<double>         solution_loc(n_q);
   std::vector<Tensor<1, dim>> solution_gradient_loc(n_q);
   // std::vector<Tensor<dim, dim>> SpreadingTensor(n_q);
-
-  Tensor<2, dim> D = SpreadingTensor();
 
   // Value of the solution at previous timestep (un) on current cell.
   std::vector<double> solution_old_loc(n_q);
@@ -171,9 +160,7 @@ HeatNonLinear::assemble_system() {
       jacobian_matrix.add(dof_indices, cell_matrix);
       residual_vector.add(dof_indices, cell_residual);
     }
-
-  jacobian_matrix.compress(VectorOperation::add);
-  residual_vector.compress(VectorOperation::add);
+    
 
   // We apply Dirichlet boundary conditions.
   // The linear system solution is delta, which is the difference between
@@ -186,7 +173,7 @@ HeatNonLinear::assemble_system() {
     std::map<types::boundary_id, const Function<dim> *> boundary_functions;
     Functions::ZeroFunction<dim>                        zero_function;
 
-    for (unsigned int i = 0; i < 6; ++i)
+    for (unsigned int i = 0; i < 2; ++i)
       boundary_functions[i] = &zero_function;
 
     VectorTools::interpolate_boundary_values(dof_handler,
@@ -194,7 +181,7 @@ HeatNonLinear::assemble_system() {
                                              boundary_values);
 
     MatrixTools::apply_boundary_values(
-      boundary_values, jacobian_matrix, delta_owned, residual_vector, false);
+      boundary_values, jacobian_matrix, delta, residual_vector, false);
   }
 }
 
@@ -203,18 +190,18 @@ void
 HeatNonLinear::solve_linear_system() {
   SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
-  SolverCG<TrilinosWrappers::MPI::Vector> solver(solver_control);
-  TrilinosWrappers::PreconditionSSOR      preconditioner;
+  SolverCG<Vector<double>> solver(solver_control);
+  PreconditionSSOR      preconditioner;
   preconditioner.initialize(jacobian_matrix,
-                            TrilinosWrappers::PreconditionSSOR::AdditionalData(1.0));
+                            PreconditionSSOR<SparseMatrix<double>>::AdditionalData(1.0));
 
-  solver.solve(jacobian_matrix, delta_owned, residual_vector, preconditioner);
-  pcout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
+  solver.solve(jacobian_matrix, delta, residual_vector, preconditioner);
+  std::cout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
 }
 
 void
 HeatNonLinear::solve_newton() {
-  const unsigned int n_max_iters        = 1000;
+  const unsigned int n_max_iters        = 10000;
   const double       residual_tolerance = 1e-6;
 
   unsigned int n_iter        = 0;
@@ -230,7 +217,7 @@ HeatNonLinear::solve_newton() {
       assemble_system();
       residual_norm = residual_vector.l2_norm();
 
-      pcout << "  Newton iteration " << n_iter << "/" << n_max_iters
+      std::cout << "  Newton iteration " << n_iter << "/" << n_max_iters
             << " - ||r|| = " << std::scientific << std::setprecision(6) << residual_norm
             << std::flush;
 
@@ -239,10 +226,9 @@ HeatNonLinear::solve_newton() {
         if (residual_norm > residual_tolerance) {
           solve_linear_system();
 
-          solution_owned += delta_owned;
-          solution = solution_owned;
+          solution += delta;
         } else {
-          pcout << " < tolerance" << std::endl;
+          std::cout << " < tolerance" << std::endl;
         }
 
       ++n_iter;
@@ -254,11 +240,6 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   DataOut<dim> data_out;
   data_out.add_data_vector(dof_handler, solution, "u");
 
-  std::vector<unsigned int> partition_int(mesh.n_active_cells());
-  GridTools::get_subdomain_association(mesh, partition_int);
-  const Vector<double> partitioning(partition_int.begin(), partition_int.end());
-  data_out.add_data_vector(partitioning, "partitioning");
-
   data_out.build_patches();
 
   std::string output_file_name = std::to_string(time_step);
@@ -267,34 +248,28 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   output_file_name =
     "output-" + std::string(4 - output_file_name.size(), '0') + output_file_name;
 
-  DataOutBase::DataOutFilter data_filter(
-    DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
-                                    /*xdmf_hdf5_output = */ true));
-  data_out.write_filtered_data(data_filter);
-  data_out.write_hdf5_parallel(data_filter, output_file_name + ".h5", MPI_COMM_WORLD);
+    std::ofstream output_file(output_file_name);
+  data_out.write_vtk(output_file);
 
-  std::vector<XDMFEntry> xdmf_entries({data_out.create_xdmf_entry(
-    data_filter, output_file_name + ".h5", time, MPI_COMM_WORLD)});
-  data_out.write_xdmf_file(xdmf_entries, output_file_name + ".xdmf", MPI_COMM_WORLD);
-  ./ ma
+
 }
 
 void
 HeatNonLinear::solve() {
-  pcout << "===============================================" << std::endl;
+  std::cout << "===============================================" << std::endl;
 
   time = 0.0;
 
   // Apply the initial condition.
   {
-    pcout << "Applying the initial condition" << std::endl;
+    std::cout << "Applying the initial condition" << std::endl;
 
-    VectorTools::interpolate(dof_handler, u_0, solution_owned);
-    solution = solution_owned;
+    VectorTools::interpolate(dof_handler, u_0, solution);
+    
 
     // Output the initial solution.
     output(0, 0.0);
-    pcout << "-----------------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------------" << std::endl;
   }
 
   unsigned int time_step = 0;
@@ -306,7 +281,7 @@ HeatNonLinear::solve() {
       // Store the old solution, so that it is available for assembly.
       solution_old = solution;
 
-      pcout << "n = " << std::setw(3) << time_step << ", t = " << std::setw(5)
+      std::cout << "n = " << std::setw(3) << time_step << ", t = " << std::setw(5)
             << std::fixed << time << std::endl;
 
       // At every time step, we invoke Newton's method to solve the non-linear
@@ -315,6 +290,6 @@ HeatNonLinear::solve() {
 
       output(time_step, time);
 
-      pcout << std::endl;
+      std::cout << std::endl;
     }
 }
