@@ -55,7 +55,7 @@ public:
   public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
-      if (p[0] == 0.0 /* && p[1] == 0.5 && p[2] == 0.5*/)
+      if (p[0] == 0.5 /* && p[1] == 0.5 && p[2] == 0.5*/)
         return 0.1;
       return 0.0;
     }
