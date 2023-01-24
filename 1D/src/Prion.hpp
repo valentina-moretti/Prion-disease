@@ -108,6 +108,7 @@ protected:
   // Final time.
   const double T;
 
+  // Diffusivity constant
   const double D = 0.0001;
 
   // Discretization. ///////////////////////////////////////////////////////////

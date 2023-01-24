@@ -183,13 +183,15 @@ void
 HeatNonLinear::solve_linear_system() {
   SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
-  SolverGMRES<Vector<double>> solver(solver_control);
-  PreconditionSOR             preconditioner;
+  SolverCG<Vector<double>> solver(solver_control);
+  // SolverGMRES<Vector<double>> solver(solver_control);
+  PreconditionSSOR preconditioner;
   preconditioner.initialize(jacobian_matrix,
                             PreconditionSOR<SparseMatrix<double>>::AdditionalData(1.0));
 
   solver.solve(jacobian_matrix, delta, residual_vector, preconditioner);
-  std::cout << "  " << solver_control.last_step() << " GMRES iterations" << std::endl;
+  std::cout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
+  // std::cout << "  " << solver_control.last_step() << " GMRES iterations" << std::endl;
 }
 
 void
