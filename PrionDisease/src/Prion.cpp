@@ -10,7 +10,7 @@ HeatNonLinear::setup() {
     const std::string mesh_file_name = "mesh-" + std::to_string(N + 1) + ".vtk";
     GridOut           grid_out;
     std::ofstream     grid_out_file(mesh_file_name);
-    grid_out.write_vtk(mesh, grid_out_file);
+    grid_out.write_vtk(mesh_serial, grid_out_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
