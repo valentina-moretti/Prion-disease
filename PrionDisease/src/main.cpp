@@ -2,7 +2,8 @@
 
 // Main function.
 int
-main(/*int argc, char *argv[]*/) {
+main(int argc, char *argv[]) {
+  Utilities::MPI::MPI_InitFinalize mpi_init(argc, argv);
 
   const unsigned int N      = 3; // 200;
   const unsigned int degree = 1;
