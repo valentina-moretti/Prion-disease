@@ -18,14 +18,13 @@
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/tria.h>
 
-#include <deal.II/lac/solver_cg.h>
-
-
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/precondition.h>
+#include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/vector.h>
+
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/vector_tools.h>
@@ -46,7 +45,7 @@ public:
   public:
     virtual double
     value(const Point<dim> & /*p*/, const unsigned int /*component*/ = 0) const override {
-      return 4.0;
+      return 1.0;
     }
   };
 
@@ -67,8 +66,8 @@ public:
                 const unsigned int &r_,
                 const double       &T_,
                 const double       &deltat_) :
-    T(T_), N(N_), r(r_), deltat(deltat_)
-     {}
+    T(T_),
+    N(N_), r(r_), deltat(deltat_) {}
 
   // Initialization.
   void
@@ -109,7 +108,7 @@ protected:
   // Final time.
   const double T;
 
-  const double D = 0.0004*4;
+  const double D = 0.0001;
 
   // Discretization. ///////////////////////////////////////////////////////////
 
@@ -125,7 +124,6 @@ protected:
   // Time step.
   const double deltat;
 
-
   // Finite element space.
   std::unique_ptr<FiniteElement<dim>> fe;
 
@@ -139,20 +137,18 @@ protected:
   Vector<double> solution;
   // System solution.
   Vector<double> solution_old;
-  
+
   // System solution.
   Vector<double> residual_vector;
-  
+
   // System matrix.
   SparseMatrix<double> jacobian_matrix;
-
 
   // Sparsity pattern.
   SparsityPattern sparsity_pattern;
 
   // System solution.
   Vector<double> delta;
-
 };
 
 #endif

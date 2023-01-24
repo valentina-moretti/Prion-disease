@@ -3,8 +3,7 @@
 // Main function.
 int
 main(/*int argc, char *argv[]*/) {
-
-  const unsigned int N      = 3; // 200;
+  const unsigned int N      = 199; // 200;
   const unsigned int degree = 1;
 
   const double T      = 20.0;

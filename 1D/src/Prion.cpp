@@ -4,11 +4,9 @@ void
 HeatNonLinear::setup() {
   // Create the mesh.
   {
-    
     std::cout << "Initializing the mesh" << std::endl;
     GridGenerator::subdivided_hyper_cube(mesh, N + 1, 0.0, 1.0, true);
-    std::cout << "  Number of elements = " << mesh.n_active_cells()
-              << std::endl;
+    std::cout << "  Number of elements = " << mesh.n_active_cells() << std::endl;
 
     // Write the mesh to file.
     const std::string mesh_file_name = "mesh-" + std::to_string(N + 1) + ".vtk";
@@ -92,13 +90,11 @@ HeatNonLinear::assemble_system() {
   // Value and gradient of the solution on current cell.
   std::vector<double>         solution_loc(n_q);
   std::vector<Tensor<1, dim>> solution_gradient_loc(n_q);
-  // std::vector<Tensor<dim, dim>> SpreadingTensor(n_q);
 
   // Value of the solution at previous timestep (un) on current cell.
   std::vector<double> solution_old_loc(n_q);
 
     for (const auto &cell : dof_handler.active_cell_iterators()) {
-
       fe_values.reinit(cell);
 
       cell_matrix   = 0.0;
@@ -158,7 +154,6 @@ HeatNonLinear::assemble_system() {
       jacobian_matrix.add(dof_indices, cell_matrix);
       residual_vector.add(dof_indices, cell_residual);
     }
-    
 
   // We apply Dirichlet boundary conditions.
   // The linear system solution is delta, which is the difference between
@@ -189,7 +184,7 @@ HeatNonLinear::solve_linear_system() {
   SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
   SolverGMRES<Vector<double>> solver(solver_control);
-  PreconditionSOR      preconditioner;
+  PreconditionSOR             preconditioner;
   preconditioner.initialize(jacobian_matrix,
                             PreconditionSOR<SparseMatrix<double>>::AdditionalData(1.0));
 
@@ -216,8 +211,8 @@ HeatNonLinear::solve_newton() {
       residual_norm = residual_vector.l2_norm();
 
       std::cout << "  Newton iteration " << n_iter << "/" << n_max_iters
-            << " - ||r|| = " << std::scientific << std::setprecision(6) << residual_norm
-            << std::flush;
+                << " - ||r|| = " << std::scientific << std::setprecision(6)
+                << residual_norm << std::flush;
 
         // We actually solve the system only if the residual is larger than the
         // tolerance.
@@ -246,10 +241,8 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   output_file_name =
     "output-" + std::string(4 - output_file_name.size(), '0') + output_file_name + ".vtk";
 
-    std::ofstream output_file(output_file_name);
+  std::ofstream output_file(output_file_name);
   data_out.write_vtk(output_file);
-
-
 }
 
 void
@@ -263,7 +256,6 @@ HeatNonLinear::solve() {
     std::cout << "Applying the initial condition" << std::endl;
 
     VectorTools::interpolate(dof_handler, u_0, solution);
-    
 
     // Output the initial solution.
     output(0, 0.0);
@@ -280,7 +272,7 @@ HeatNonLinear::solve() {
       solution_old = solution;
 
       std::cout << "n = " << std::setw(3) << time_step << ", t = " << std::setw(5)
-            << std::fixed << time << std::endl;
+                << std::fixed << time << std::endl;
 
       // At every time step, we invoke Newton's method to solve the non-linear
       // problem.
