@@ -151,7 +151,7 @@ HeatNonLinear::assemble_system() {
 
               // ------------------------------------------- (R.1)
               // ------------------------------------------- // Time derivative term.
-              cell_residual(i) += (solution_loc[q] - solution_old_loc[q]) / deltat *
+              cell_residual(i) -= (solution_loc[q] - solution_old_loc[q]) / deltat *
                                   fe_values.shape_value(i, q) * fe_values.JxW(q);
 
               // ------------------------------------------- (R.2)
@@ -161,7 +161,7 @@ HeatNonLinear::assemble_system() {
 
               // ------------------------------------------- (R.3)
               // ------------------------------------------- // Diffusion term.
-              cell_residual(i) -= (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
+              cell_residual(i) += (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
                                   fe_values.shape_value(i, q) * fe_values.JxW(q);
             }
         }
@@ -276,7 +276,7 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   std::vector<XDMFEntry> xdmf_entries({data_out.create_xdmf_entry(
     data_filter, output_file_name + ".h5", time, MPI_COMM_WORLD)});
   data_out.write_xdmf_file(xdmf_entries, output_file_name + ".xdmf", MPI_COMM_WORLD);
-  ./ ma
+
 }
 
 void
