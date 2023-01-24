@@ -6,13 +6,11 @@ HeatNonLinear::setup() {
   {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
-    // GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, -1.0, 1.0, true);
-
-    GridIn<dim> grid_in;
-    grid_in.attach_triangulation(mesh_serial);
-    const std::string mesh_file_name = "../mesh/mesh-cube-40.msh";
-    std::ifstream     grid_in_file(mesh_file_name);
-    grid_in.read_msh(grid_in_file);
+    GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, -1.0, 1.0, true);
+    const std::string mesh_file_name = "mesh-" + std::to_string(N + 1) + ".vtk";
+    GridOut           grid_out;
+    std::ofstream     grid_out_file(mesh_file_name);
+    grid_out.write_vtk(mesh, grid_out_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
@@ -46,7 +44,11 @@ HeatNonLinear::setup() {
     pcout << "Initializing the DoF handler" << std::endl;
 
     dof_handler.reinit(mesh);
+    pcout << "Initializing the DoF handler" << std::endl;
+
     dof_handler.distribute_dofs(*fe);
+    pcout << "Initializing the DoF handler" << std::endl;
+
 
     locally_owned_dofs = dof_handler.locally_owned_dofs();
     DoFTools::extract_locally_relevant_dofs(dof_handler, locally_relevant_dofs);
