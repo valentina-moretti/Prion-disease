@@ -6,13 +6,16 @@ HeatNonLinear::setup() {
   {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
-    GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, -1.0, 1.0, true);
 
-    GridIn<dim> grid_in;
-    grid_in.attach_triangulation(mesh_serial);
-    const std::string mesh_file_name = "../mesh/mesh-cube-40.msh";
-    std::ifstream     grid_in_file(mesh_file_name);
-    grid_in.read_msh(grid_in_file);
+    GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
+    GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
+
+    // GridIn<dim> grid_in;
+    // grid_in.attach_triangulation(mesh_serial);
+    // const std::string mesh_file_name =
+    //   "../mesh/mesh-cube-" + std::to_string(N + 1) + ".msh";
+    // std::ifstream grid_in_file(mesh_file_name);
+    // grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
@@ -101,9 +104,6 @@ HeatNonLinear::assemble_system() {
   // Value and gradient of the solution on current cell.
   std::vector<double>         solution_loc(n_q);
   std::vector<Tensor<1, dim>> solution_gradient_loc(n_q);
-  // std::vector<Tensor<dim, dim>> SpreadingTensor(n_q);
-
-  Tensor<2, dim> D = SpreadingTensor();
 
   // Value of the solution at previous timestep (un) on current cell.
   std::vector<double> solution_old_loc(n_q);
@@ -203,13 +203,15 @@ void
 HeatNonLinear::solve_linear_system() {
   SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
-  SolverGMRES<TrilinosWrappers::MPI::Vector> solver(solver_control);
-  TrilinosWrappers::PreconditionSSOR      preconditioner;
+  SolverCG<TrilinosWrappers::MPI::Vector> solver(solver_control);
+  // SolverGMRES<TrilinosWrappers::MPI::Vector> solver(solver_control);
+  TrilinosWrappers::PreconditionSSOR preconditioner;
   preconditioner.initialize(jacobian_matrix,
                             TrilinosWrappers::PreconditionSSOR::AdditionalData(1.0));
 
   solver.solve(jacobian_matrix, delta_owned, residual_vector, preconditioner);
-  pcout << "  " << solver_control.last_step() << " GMRES iterations" << std::endl;
+  pcout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
+  // pcout << "  " << solver_control.last_step() << " GMRES iterations" << std::endl;
 }
 
 void
@@ -276,7 +278,6 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   std::vector<XDMFEntry> xdmf_entries({data_out.create_xdmf_entry(
     data_filter, output_file_name + ".h5", time, MPI_COMM_WORLD)});
   data_out.write_xdmf_file(xdmf_entries, output_file_name + ".xdmf", MPI_COMM_WORLD);
-
 }
 
 void

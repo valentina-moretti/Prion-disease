@@ -9,8 +9,6 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
-#include <deal.II/lac/solver_gmres.h>
-
 #include <deal.II/fe/fe_simplex_p.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
@@ -19,16 +17,18 @@
 
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/grid_out.h>
 #include <deal.II/grid/tria.h>
 
 #include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/trilinos_precondition.h>
 #include <deal.II/lac/trilinos_sparse_matrix.h>
 
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/vector_tools.h>
-#include <deal.II/grid/grid_out.h>
+
 #include <fstream>
 #include <iostream>
 
@@ -49,19 +49,38 @@ public:
     }
   };
 
+  void
+  press_to_continue(std::ostream &os = std::cout, std::istream &is = std::cin) const {
+    os << "Press enter to continue: ";
+    is.ignore();
+  }
+
+  void
+  print_tensor(Tensor<2, dim> tensor) {
+      for (unsigned int i = 0; i < dim; i++) {
+          for (unsigned int j = 0; j < dim; j++) {
+            std::cout << tensor[i][j] << "  ";
+          }
+        std::cout << std::endl;
+      }
+    std::cout << std::endl;
+    press_to_continue();
+  }
+
   Tensor<2, dim>
-  SpreadingTensor() {
+  set_up_diffusivity() {
     Tensor<2, dim> result;
 
-      // duex / dx
-      for (unsigned int i = 1; i < dim + 1; ++i) {
-          for (unsigned int j = 1; j < dim + 1; ++j) {
+      for (unsigned int i = 0; i < dim; ++i) {
+          for (unsigned int j = 0; j < dim; ++j) {
             if (i != j)
-              result[i][j] = 0.0002;
+              result[i][j] = d_axn;
             else
-              result[i][j] = 0.0004;
+              result[i][j] = d_ext + d_axn;
           }
       }
+
+    // print_tensor(result);
 
     return result;
   }
@@ -71,7 +90,7 @@ public:
   public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
-      if (p[0] == 0.0 && p[1] == 0.5 && p[2] == 0.5)
+      if (p[0] == 0.5 && p[1] == 0.5 && p[2] == 0.5)
         return 0.1;
       return 0.0;
     }
@@ -86,7 +105,9 @@ public:
     mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)),
     mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)),
     pcout(std::cout, mpi_rank == 0), T(T_), N(N_), r(r_), deltat(deltat_),
-    mesh(MPI_COMM_WORLD) {}
+    mesh(MPI_COMM_WORLD) {
+    D = set_up_diffusivity();
+  }
 
   // Initialization.
   void
@@ -137,6 +158,12 @@ protected:
 
   // Final time.
   const double T;
+
+  const double d_ext = 0.0001;
+  const double d_axn = 0.001;
+
+  // Diffusivity tensor
+  Tensor<2, dim> D;
 
   // Discretization. ///////////////////////////////////////////////////////////
 
