@@ -98,8 +98,6 @@ HeatNonLinear::assemble_system() {
   std::vector<double> solution_old_loc(n_q);
 
     for (const auto &cell : dof_handler.active_cell_iterators()) {
-      if (!cell->is_locally_owned())
-        continue;
 
       fe_values.reinit(cell);
 
@@ -190,18 +188,18 @@ void
 HeatNonLinear::solve_linear_system() {
   SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
-  SolverCG<Vector<double>> solver(solver_control);
-  PreconditionSSOR      preconditioner;
+  SolverGMRES<Vector<double>> solver(solver_control);
+  PreconditionSOR      preconditioner;
   preconditioner.initialize(jacobian_matrix,
-                            PreconditionSSOR<SparseMatrix<double>>::AdditionalData(1.0));
+                            PreconditionSOR<SparseMatrix<double>>::AdditionalData(1.0));
 
   solver.solve(jacobian_matrix, delta, residual_vector, preconditioner);
-  std::cout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
+  std::cout << "  " << solver_control.last_step() << " GMRES iterations" << std::endl;
 }
 
 void
 HeatNonLinear::solve_newton() {
-  const unsigned int n_max_iters        = 10000;
+  const unsigned int n_max_iters        = 1000;
   const double       residual_tolerance = 1e-6;
 
   unsigned int n_iter        = 0;
