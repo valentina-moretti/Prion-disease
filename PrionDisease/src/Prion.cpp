@@ -7,10 +7,12 @@ HeatNonLinear::setup() {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
     GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, -1.0, 1.0, true);
-    const std::string mesh_file_name = "mesh-" + std::to_string(N + 1) + ".vtk";
-    GridOut           grid_out;
-    std::ofstream     grid_out_file(mesh_file_name);
-    grid_out.write_vtk(mesh_serial, grid_out_file);
+
+    GridIn<dim> grid_in;
+    grid_in.attach_triangulation(mesh_serial);
+    const std::string mesh_file_name = "../mesh/mesh-cube-40.msh";
+    std::ifstream     grid_in_file(mesh_file_name);
+    grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
@@ -44,11 +46,7 @@ HeatNonLinear::setup() {
     pcout << "Initializing the DoF handler" << std::endl;
 
     dof_handler.reinit(mesh);
-    pcout << "Initializing the DoF handler" << std::endl;
-
     dof_handler.distribute_dofs(*fe);
-    pcout << "Initializing the DoF handler" << std::endl;
-
 
     locally_owned_dofs = dof_handler.locally_owned_dofs();
     DoFTools::extract_locally_relevant_dofs(dof_handler, locally_relevant_dofs);
@@ -182,22 +180,22 @@ HeatNonLinear::assemble_system() {
   // u_{n+1}^{(k+1)} and u_{n+1}^{(k)}. Both must satisfy the same Dirichlet
   // boundary conditions: therefore, on the boundary, delta = u_{n+1}^{(k+1)} -
   // u_{n+1}^{(k+1)} = 0. We impose homogeneous Dirichlet BCs.
-  {
-    std::map<types::global_dof_index, double> boundary_values;
+  // {
+  //   std::map<types::global_dof_index, double> boundary_values;
 
-    std::map<types::boundary_id, const Function<dim> *> boundary_functions;
-    Functions::ZeroFunction<dim>                        zero_function;
+  //   std::map<types::boundary_id, const Function<dim> *> boundary_functions;
+  //   Functions::ZeroFunction<dim>                        zero_function;
 
-    for (unsigned int i = 0; i < 6; ++i)
-      boundary_functions[i] = &zero_function;
+  //   for (unsigned int i = 0; i < 6; ++i)
+  //     boundary_functions[i] = &zero_function;
 
-    VectorTools::interpolate_boundary_values(dof_handler,
-                                             boundary_functions,
-                                             boundary_values);
+  //   VectorTools::interpolate_boundary_values(dof_handler,
+  //                                            boundary_functions,
+  //                                            boundary_values);
 
-    MatrixTools::apply_boundary_values(
-      boundary_values, jacobian_matrix, delta_owned, residual_vector, false);
-  }
+  //   MatrixTools::apply_boundary_values(
+  //     boundary_values, jacobian_matrix, delta_owned, residual_vector, false);
+  // }
 }
 
 // TODO CHOOSE THE BETTER PRECONDITIONER
@@ -205,13 +203,13 @@ void
 HeatNonLinear::solve_linear_system() {
   SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
-  SolverCG<TrilinosWrappers::MPI::Vector> solver(solver_control);
+  SolverGMRES<TrilinosWrappers::MPI::Vector> solver(solver_control);
   TrilinosWrappers::PreconditionSSOR      preconditioner;
   preconditioner.initialize(jacobian_matrix,
                             TrilinosWrappers::PreconditionSSOR::AdditionalData(1.0));
 
   solver.solve(jacobian_matrix, delta_owned, residual_vector, preconditioner);
-  pcout << "  " << solver_control.last_step() << " CG iterations" << std::endl;
+  pcout << "  " << solver_control.last_step() << " GMRES iterations" << std::endl;
 }
 
 void

@@ -9,6 +9,8 @@
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 
+#include <deal.II/lac/solver_gmres.h>
+
 #include <deal.II/fe/fe_simplex_p.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_values.h>
@@ -69,7 +71,7 @@ public:
   public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
-      if (p[0] == 0.0 /* && p[1] == 0.5 && p[2] == 0.5*/)
+      if (p[0] == 0.0 && p[1] == 0.5 && p[2] == 0.5)
         return 0.1;
       return 0.0;
     }

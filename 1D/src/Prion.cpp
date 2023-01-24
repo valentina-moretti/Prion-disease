@@ -165,22 +165,22 @@ HeatNonLinear::assemble_system() {
   // u_{n+1}^{(k+1)} and u_{n+1}^{(k)}. Both must satisfy the same Dirichlet
   // boundary conditions: therefore, on the boundary, delta = u_{n+1}^{(k+1)} -
   // u_{n+1}^{(k+1)} = 0. We impose homogeneous Dirichlet BCs.
-  {
-    std::map<types::global_dof_index, double> boundary_values;
+  // {
+  //   std::map<types::global_dof_index, double> boundary_values;
 
-    std::map<types::boundary_id, const Function<dim> *> boundary_functions;
-    Functions::ZeroFunction<dim>                        zero_function;
+  //   std::map<types::boundary_id, const Function<dim> *> boundary_functions;
+  //   Functions::ZeroFunction<dim>                        zero_function;
 
-    for (unsigned int i = 0; i < 2; ++i)
-      boundary_functions[i] = &zero_function;
+  //   for (unsigned int i = 0; i < 2; ++i)
+  //     boundary_functions[i] = &zero_function;
 
-    VectorTools::interpolate_boundary_values(dof_handler,
-                                             boundary_functions,
-                                             boundary_values);
+  //   VectorTools::interpolate_boundary_values(dof_handler,
+  //                                            boundary_functions,
+  //                                            boundary_values);
 
-    MatrixTools::apply_boundary_values(
-      boundary_values, jacobian_matrix, delta, residual_vector, false);
-  }
+  //   MatrixTools::apply_boundary_values(
+  //     boundary_values, jacobian_matrix, delta, residual_vector, false);
+  // }
 }
 
 // TODO CHOOSE THE BETTER PRECONDITIONER
