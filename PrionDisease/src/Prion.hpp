@@ -74,9 +74,9 @@ public:
       for (unsigned int i = 0; i < dim; ++i) {
           for (unsigned int j = 0; j < dim; ++j) {
             if (i != j)
-              result[i][j] = d_axn;
+              result[i][j] = 0.0;
             else
-              result[i][j] = d_ext + d_axn;
+              result[i][j] = d_ext ;
           }
       }
 
@@ -159,8 +159,8 @@ protected:
   // Final time.
   const double T;
 
-  const double d_ext = 0.0001;
-  const double d_axn = 0.001;
+  const double d_ext = 0.001;
+  //const double d_axn = 0.001;
 
   // Diffusivity tensor
   Tensor<2, dim> D;

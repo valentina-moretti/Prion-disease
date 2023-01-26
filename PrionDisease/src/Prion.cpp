@@ -151,8 +151,9 @@ HeatNonLinear::assemble_system() {
 
               // ------------------------------------------- (R.1)
               // ------------------------------------------- // Time derivative term.
-              cell_residual(i) -= (solution_loc[q] - solution_old_loc[q]) / deltat *
-                                  fe_values.shape_value(i, q) * fe_values.JxW(q);
+              cell_residual(i) -= fe_values.shape_value(i, q) *
+                                  (solution_loc[q] - solution_old_loc[q]) / deltat *
+                                   fe_values.JxW(q);
 
               // ------------------------------------------- (R.2)
               // ------------------------------------------- //
@@ -161,8 +162,9 @@ HeatNonLinear::assemble_system() {
 
               // ------------------------------------------- (R.3)
               // ------------------------------------------- // Diffusion term.
-              cell_residual(i) += (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
-                                  fe_values.shape_value(i, q) * fe_values.JxW(q);
+              cell_residual(i) += fe_values.shape_value(i, q) *
+                                (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
+                                   fe_values.JxW(q);
             }
         }
 
@@ -217,7 +219,7 @@ HeatNonLinear::solve_linear_system() {
 void
 HeatNonLinear::solve_newton() {
   const unsigned int n_max_iters        = 1000;
-  const double       residual_tolerance = 1e-6;
+  const double       residual_tolerance = 1e-10;
 
   unsigned int n_iter        = 0;
   double       residual_norm = residual_tolerance + 1;

@@ -244,7 +244,7 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   output_file_name =
     "output-" + std::string(4 - output_file_name.size(), '0') + output_file_name + ".vtk";
 
-  std::ofstream output_file(output_file_name);
+  std::ofstream output_file(/scratch/hpc/par8/output_file_name);
   data_out.write_vtk(output_file);
 }
 
