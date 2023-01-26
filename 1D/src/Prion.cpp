@@ -232,6 +232,7 @@ HeatNonLinear::solve_newton() {
 
 void
 HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
+  UNUSED(time);
   DataOut<dim> data_out;
   data_out.add_data_vector(dof_handler, solution, "u");
 

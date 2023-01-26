@@ -32,6 +32,11 @@
 #include <fstream>
 #include <iostream>
 
+#define UNUSED(expr) \
+    do {             \
+      (void)(expr);  \
+  } while (0)
+
 using namespace dealii;
 
 // Class representing the non-linear diffusion problem.
@@ -54,8 +59,8 @@ public:
   public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
-      if (p[0] == 0.5 /* && p[1] == 0.5 && p[2] == 0.5*/)
-        return 0.1;
+      if (p[0] > 0.4 && p[0] < 0.6)
+        return 0.1 * std::exp(-(30 * p[0] - 15) * (30 * p[0] - 15));
       return 0.0;
     }
   };
