@@ -275,11 +275,11 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
     DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
                                     /*xdmf_hdf5_output = */ true));
   data_out.write_filtered_data(data_filter);
-  data_out.write_hdf5_parallel(data_filter, output_file_name + ".h5", MPI_COMM_WORLD);
+  data_out.write_hdf5_parallel(data_filter, /scratch/hpc/par8/output_file_name + ".h5", MPI_COMM_WORLD);
 
   std::vector<XDMFEntry> xdmf_entries({data_out.create_xdmf_entry(
-    data_filter, output_file_name + ".h5", time, MPI_COMM_WORLD)});
-  data_out.write_xdmf_file(xdmf_entries, output_file_name + ".xdmf", MPI_COMM_WORLD);
+    data_filter, /scratch/hpc/par8/output_file_name + ".h5", time, MPI_COMM_WORLD)});
+  data_out.write_xdmf_file(xdmf_entries, /scratch/hpc/par8/output_file_name + ".xdmf", MPI_COMM_WORLD);
 }
 
 void
