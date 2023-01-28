@@ -12,9 +12,8 @@ HeatNonLinear::setup() {
 
     // GridIn<dim> grid_in;
     // grid_in.attach_triangulation(mesh_serial);
-    // const std::string mesh_file_name =
-    //   "../mesh/mesh-cube-" + std::to_string(N + 1) + ".msh";
-    // std::ifstream grid_in_file(mesh_file_name);
+    // const std::string mesh_file_name = "../mesh/half-brain.msh";
+    // std::ifstream     grid_in_file(mesh_file_name);
     // grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
@@ -203,7 +202,7 @@ HeatNonLinear::assemble_system() {
 // TODO CHOOSE THE BETTER PRECONDITIONER
 void
 HeatNonLinear::solve_linear_system() {
-  SolverControl solver_control(1000, 1e-10 * residual_vector.l2_norm());
+  SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
 
   SolverCG<TrilinosWrappers::MPI::Vector> solver(solver_control);
   // SolverGMRES<TrilinosWrappers::MPI::Vector> solver(solver_control);
@@ -268,8 +267,8 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   std::string output_file_name = std::to_string(time_step);
 
   // Pad with zeros.
-  output_file_name = "output-" +
-                     std::string(4 - output_file_name.size(), '0') + output_file_name;
+  output_file_name =
+    "output-" + std::string(4 - output_file_name.size(), '0') + output_file_name;
 
   DataOutBase::DataOutFilter data_filter(
     DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
