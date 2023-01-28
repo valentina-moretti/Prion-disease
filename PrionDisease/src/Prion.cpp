@@ -268,7 +268,7 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   std::string output_file_name = std::to_string(time_step);
 
   // Pad with zeros.
-  output_file_name = "/scratch/hpc/par8/output-" +
+  output_file_name = "output-" +
                      std::string(4 - output_file_name.size(), '0') + output_file_name;
 
   DataOutBase::DataOutFilter data_filter(
