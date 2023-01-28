@@ -153,7 +153,7 @@ HeatNonLinear::assemble_system() {
               // ------------------------------------------- // Time derivative term.
               cell_residual(i) -= fe_values.shape_value(i, q) *
                                   (solution_loc[q] - solution_old_loc[q]) / deltat *
-                                   fe_values.JxW(q);
+                                  fe_values.JxW(q);
 
               // ------------------------------------------- (R.2)
               // ------------------------------------------- //
@@ -163,8 +163,8 @@ HeatNonLinear::assemble_system() {
               // ------------------------------------------- (R.3)
               // ------------------------------------------- // Diffusion term.
               cell_residual(i) += fe_values.shape_value(i, q) *
-                                (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
-                                   fe_values.JxW(q);
+                                  (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
+                                  fe_values.JxW(q);
             }
         }
 
@@ -203,7 +203,7 @@ HeatNonLinear::assemble_system() {
 // TODO CHOOSE THE BETTER PRECONDITIONER
 void
 HeatNonLinear::solve_linear_system() {
-  SolverControl solver_control(1000, 1e-6 * residual_vector.l2_norm());
+  SolverControl solver_control(1000, 1e-10 * residual_vector.l2_norm());
 
   SolverCG<TrilinosWrappers::MPI::Vector> solver(solver_control);
   // SolverGMRES<TrilinosWrappers::MPI::Vector> solver(solver_control);
@@ -268,18 +268,18 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   std::string output_file_name = std::to_string(time_step);
 
   // Pad with zeros.
-  output_file_name =
-    "output-" + std::string(4 - output_file_name.size(), '0') + output_file_name;
+  output_file_name = "/scratch/hpc/par8/output-" +
+                     std::string(4 - output_file_name.size(), '0') + output_file_name;
 
   DataOutBase::DataOutFilter data_filter(
     DataOutBase::DataOutFilterFlags(/*filter_duplicate_vertices = */ false,
                                     /*xdmf_hdf5_output = */ true));
   data_out.write_filtered_data(data_filter);
-  data_out.write_hdf5_parallel(data_filter, "/scratch/hpc/par8/" + output_file_name + ".h5", MPI_COMM_WORLD);
+  data_out.write_hdf5_parallel(data_filter, output_file_name + ".h5", MPI_COMM_WORLD);
 
   std::vector<XDMFEntry> xdmf_entries({data_out.create_xdmf_entry(
-    data_filter, "/scratch/hpc/par8/" + output_file_name + ".h5", time, MPI_COMM_WORLD)});
-  data_out.write_xdmf_file(xdmf_entries, "/scratch/hpc/par8/" + output_file_name + ".xdmf", MPI_COMM_WORLD);
+    data_filter, output_file_name + ".h5", time, MPI_COMM_WORLD)});
+  data_out.write_xdmf_file(xdmf_entries, output_file_name + ".xdmf", MPI_COMM_WORLD);
 }
 
 void

@@ -74,9 +74,9 @@ public:
       for (unsigned int i = 0; i < dim; ++i) {
           for (unsigned int j = 0; j < dim; ++j) {
             if (i != j)
-              result[i][j] = 0.0;
+              result[i][j] = d_axn;
             else
-              result[i][j] = d_ext ;
+              result[i][j] = d_ext + d_axn;
           }
       }
 
@@ -90,8 +90,10 @@ public:
   public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
-      if (p[0] == 0.5 && p[1] == 0.5 && p[2] == 0.5)
-        return 0.1;
+      if (p[0] > 0.4 && p[0] < 0.6 && p[1] > 0.4 && p[1] < 0.6 && p[2] > 0.4 &&
+          p[2] < 0.6)
+        return 0.1 * std::exp(-std::pow(30 * p[0] - 15, 2) - std::pow(30 * p[1] - 15, 2) -
+                              std::pow(30 * p[2] - 15, 2));
       return 0.0;
     }
   };
@@ -160,7 +162,7 @@ protected:
   const double T;
 
   const double d_ext = 0.001;
-  //const double d_axn = 0.001;
+  const double d_axn = 0.0;
 
   // Diffusivity tensor
   Tensor<2, dim> D;

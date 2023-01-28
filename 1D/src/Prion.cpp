@@ -233,18 +233,19 @@ HeatNonLinear::solve_newton() {
 void
 HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   UNUSED(time);
-  DataOut<dim> data_out;scratch
-  data_out.add_data_vector(dof_handler, solution, "u");
+  DataOut<dim> data_out;
+  scratch      data_out.add_data_vector(dof_handler, solution, "u");
 
   data_out.build_patches();
 
   std::string output_file_name = std::to_string(time_step);
 
   // Pad with zeros.
-  output_file_name =
-    "output-" + std::string(4 - output_file_name.size(), '0') + output_file_name + ".vtk";
+  output_file_name = "/scratch/hpc/par8/output-" +
+                     std::string(4 - output_file_name.size(), '0') + output_file_name +
+                     ".vtk";
 
-  std::ofstream output_file("/scratch/hpc/par8/" + output_file_name);
+  std::ofstream output_file(output_file_name);
   data_out.write_vtk(output_file);
 }
 
