@@ -74,7 +74,7 @@ public:
       for (unsigned int i = 0; i < dim; ++i) {
           for (unsigned int j = 0; j < dim; ++j) {
             if (i != j)
-              result[i][j] = d_axn;
+              result[i][j] = d_axn * axon_direction[i] * axon_direction[j];
             else
               result[i][j] = d_ext + d_axn * axon_direction[i] * axon_direction[j];
           }
