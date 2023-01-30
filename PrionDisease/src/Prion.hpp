@@ -3,6 +3,7 @@
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/quadrature_lib.h>
+#include <deal.II/base/timer.h>
 
 #include <deal.II/distributed/fully_distributed_tria.h>
 
@@ -116,7 +117,8 @@ public:
     mpi_size(Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)),
     mpi_rank(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)),
     pcout(std::cout, mpi_rank == 0), T(T_), N(N_), r(r_), deltat(deltat_),
-    mesh(MPI_COMM_WORLD) {
+    mesh(MPI_COMM_WORLD),
+    timer_output(MPI_COMM_WORLD, pcout, TimerOutput::summary, TimerOutput::wall_times) {
     D = set_up_diffusivity();
   }
 
@@ -172,8 +174,8 @@ protected:
 
   const std::vector<double> axon_direction = {1, 1, 1};
 
-  const double d_ext = 10;
-  const double d_axn = 20;
+  const double d_ext = 0.01;
+  const double d_axn = 0;
 
   // Diffusivity tensor
   Tensor<2, dim> D;
@@ -224,6 +226,8 @@ protected:
 
   // System solution at previous time step.
   TrilinosWrappers::MPI::Vector solution_old;
+
+  TimerOutput timer_output;
 };
 
 #endif
