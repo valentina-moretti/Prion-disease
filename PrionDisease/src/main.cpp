@@ -18,12 +18,13 @@ main(int argc, char *argv[]) {
 
   std::ofstream file_out("Integral.csv");
 
-  if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)==0){
-    //problem.timer_output.enter_subsection("Writing csv");
+  problem.timer_output.enter_subsection("Writing csv");
+  if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0){
     for(size_t i = 0; i< problem.integral.size(); ++i){
-      file_out << i << "," << problem.integral[i] << std::endl;
+      file_out << i << " ,  " << problem.integral[i] << std::endl;
     }
-    //problem.timer_output.leave_subsection();
   }
+  problem.timer_output.leave_subsection();
+
   return 0;
 }
