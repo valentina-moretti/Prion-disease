@@ -8,14 +8,14 @@ HeatNonLinear::setup() {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
 
-    GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
-    GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
+    // GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
+    // GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
 
-    // GridIn<dim> grid_in;
-    // grid_in.attach_triangulation(mesh_serial);
-    // const std::string mesh_file_name = "../mesh/half-brain.msh";
-    // std::ifstream     grid_in_file(mesh_file_name);
-    // grid_in.read_msh(grid_in_file);
+    GridIn<dim> grid_in;
+    grid_in.attach_triangulation(mesh_serial);
+    const std::string mesh_file_name = "../mesh/half-brain.msh";
+    std::ifstream     grid_in_file(mesh_file_name);
+    grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
@@ -104,6 +104,8 @@ HeatNonLinear::assemble_system() {
   jacobian_matrix = 0.0;
   residual_vector = 0.0;
 
+  double integr = 0.;
+
   // Value and gradient of the solution on current cell.
   std::vector<double>         solution_loc(n_q);
   std::vector<Tensor<1, dim>> solution_gradient_loc(n_q);
@@ -169,6 +171,9 @@ HeatNonLinear::assemble_system() {
                                   (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
                                   fe_values.JxW(q);
             }
+
+          integr += solution_loc[q] * fe_values.JxW(q);
+            
         }
 
       cell->get_dof_indices(dof_indices);
@@ -176,9 +181,13 @@ HeatNonLinear::assemble_system() {
       jacobian_matrix.add(dof_indices, cell_matrix);
       residual_vector.add(dof_indices, cell_residual);
     }
+  
+  
 
   jacobian_matrix.compress(VectorOperation::add);
   residual_vector.compress(VectorOperation::add);
+  double sum_integr= dealii::Utilities::MPI::sum(integr, MPI_COMM_WORLD);
+  integral.emplace_back(integr);
 
   // We apply Dirichlet boundary conditions.
   // The linear system solution is delta, which is the difference between
@@ -265,10 +274,10 @@ HeatNonLinear::output(const unsigned int &time_step, const double &time) const {
   DataOut<dim> data_out;
   data_out.add_data_vector(dof_handler, solution, "u");
 
-  std::vector<unsigned int> partition_int(mesh.n_active_cells());
-  GridTools::get_subdomain_association(mesh, partition_int);
-  const Vector<double> partitioning(partition_int.begin(), partition_int.end());
-  data_out.add_data_vector(partitioning, "partitioning");
+  // std::vector<unsigned int> partition_int(mesh.n_active_cells());
+  // GridTools::get_subdomain_association(mesh, partition_int);
+  // const Vector<double> partitioning(partition_int.begin(), partition_int.end());
+  // data_out.add_data_vector(partitioning, "partitioning");
 
   data_out.build_patches();
 
