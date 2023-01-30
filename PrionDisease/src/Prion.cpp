@@ -13,7 +13,7 @@ HeatNonLinear::setup() {
 
     GridIn<dim> grid_in;
     grid_in.attach_triangulation(mesh_serial);
-    const std::string mesh_file_name = "../mesh/half-brain.msh";
+    const std::string mesh_file_name = "../mesh/half-brain-refined/half-brain-refined.msh";
     std::ifstream     grid_in_file(mesh_file_name);
     grid_in.read_msh(grid_in_file);
 
@@ -335,7 +335,7 @@ HeatNonLinear::solve() {
       solve_newton();
 
       timer_output.enter_subsection("Writing");
-      if(time_step%20==0) output(time_step, time);
+      if(time_step % 10 == 0) output(time_step, time);
       timer_output.leave_subsection();
 
       pcout << std::endl;

@@ -17,7 +17,7 @@ find_package(MPI REQUIRED)
 set(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}")
 
 # Locate Boost.
-find_package(Boost 1.72.0 REQUIRED
+find_package(Boost 1.71.0 REQUIRED
   COMPONENTS filesystem iostreams serialization
   HINTS ${BOOST_DIR} $ENV{BOOST_DIR} $ENV{mkBoostPrefix})
 message(STATUS "Using the Boost-${Boost_VERSION} configuration found at ${Boost_DIR}")
