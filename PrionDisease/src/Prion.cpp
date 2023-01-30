@@ -326,7 +326,7 @@ HeatNonLinear::solve() {
       solve_newton();
 
       timer_output.enter_subsection("Writing");
-      output(time_step, time);
+      if(time_step % 10 == 0) output(time_step, time);
       timer_output.leave_subsection();
 
       pcout << std::endl;
