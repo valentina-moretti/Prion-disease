@@ -3,6 +3,7 @@
 void
 HeatNonLinear::setup() {
   // Create the mesh.
+  timer_output.enter_subsection("Mesh initialization");
   {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
@@ -24,6 +25,7 @@ HeatNonLinear::setup() {
 
     pcout << "  Number of elements = " << mesh.n_global_active_cells() << std::endl;
   }
+  timer_output.leave_subsection("Mesh initialization");
 
   pcout << "-----------------------------------------------" << std::endl;
 
@@ -44,6 +46,7 @@ HeatNonLinear::setup() {
   pcout << "-----------------------------------------------" << std::endl;
 
   // Initialize the DoF handler.
+  timer_output.enter_subsection("Initialize DoFs");
   {
     pcout << "Initializing the DoF handler" << std::endl;
 
@@ -55,6 +58,7 @@ HeatNonLinear::setup() {
 
     pcout << "  Number of DoFs = " << dof_handler.n_dofs() << std::endl;
   }
+  timer_output.leave_subsection();
 
   pcout << "-----------------------------------------------" << std::endl;
 
@@ -230,7 +234,9 @@ HeatNonLinear::solve_newton() {
   }
 
     while (n_iter < n_max_iters && residual_norm > residual_tolerance) {
+      timer_output.enter_subsection("Assemble system");
       assemble_system();
+      timer_output.leave_subsection();
       residual_norm = residual_vector.l2_norm();
 
       pcout << "  Newton iteration " << n_iter << "/" << n_max_iters
@@ -240,7 +246,9 @@ HeatNonLinear::solve_newton() {
         // We actually solve the system only if the residual is larger than the
         // tolerance.
         if (residual_norm > residual_tolerance) {
+          timer_output.enter_subsection("Solve linear system");
           solve_linear_system();
+          timer_output.leave_subsection();
 
           solution_owned += delta_owned;
           solution = solution_owned;
@@ -295,7 +303,9 @@ HeatNonLinear::solve() {
     solution = solution_owned;
 
     // Output the initial solution.
+    timer_output.enter_subsection("Writing");
     output(0, 0.0);
+    timer_output.leave_subsection();
     pcout << "-----------------------------------------------" << std::endl;
   }
 
@@ -315,7 +325,9 @@ HeatNonLinear::solve() {
       // problem.
       solve_newton();
 
+      timer_output.enter_subsection("Writing");
       output(time_step, time);
+      timer_output.leave_subsection();
 
       pcout << std::endl;
     }
