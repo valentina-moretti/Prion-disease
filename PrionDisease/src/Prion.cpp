@@ -187,7 +187,7 @@ HeatNonLinear::assemble_system() {
   jacobian_matrix.compress(VectorOperation::add);
   residual_vector.compress(VectorOperation::add);
   double sum_integr= dealii::Utilities::MPI::sum(integr, MPI_COMM_WORLD);
-  integral.emplace_back(sum_integr);
+  if(mpi_rank==0) integral.emplace_back(sum_integr);
 
   // We apply Dirichlet boundary conditions.
   // The linear system solution is delta, which is the difference between
