@@ -13,7 +13,7 @@ HeatNonLinear::setup() {
 
     GridIn<dim> grid_in;
     grid_in.attach_triangulation(mesh_serial);
-    const std::string mesh_file_name = "../mesh/half-brain-refined/half-brain-refined.msh";
+    const std::string mesh_file_name = "../mesh/half-brain.msh";
     std::ifstream     grid_in_file(mesh_file_name);
     grid_in.read_msh(grid_in_file);
 
@@ -104,7 +104,6 @@ HeatNonLinear::assemble_system() {
   jacobian_matrix = 0.0;
   residual_vector = 0.0;
 
-  double integr = 0.;
 
   // Value and gradient of the solution on current cell.
   std::vector<double>         solution_loc(n_q);
@@ -172,7 +171,7 @@ HeatNonLinear::assemble_system() {
                                   fe_values.JxW(q);
             }
 
-          integr += solution_loc[q] * fe_values.JxW(q);
+         
             
         }
 
@@ -186,9 +185,7 @@ HeatNonLinear::assemble_system() {
 
   jacobian_matrix.compress(VectorOperation::add);
   residual_vector.compress(VectorOperation::add);
-  double sum_integr= dealii::Utilities::MPI::sum(integr, MPI_COMM_WORLD);
-  if(mpi_rank==0) integral.emplace_back(sum_integr);
-
+  
   // We apply Dirichlet boundary conditions.
   // The linear system solution is delta, which is the difference between
   // u_{n+1}^{(k+1)} and u_{n+1}^{(k)}. Both must satisfy the same Dirichlet

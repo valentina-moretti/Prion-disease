@@ -121,7 +121,6 @@ public:
     mesh(MPI_COMM_WORLD),
     timer_output(MPI_COMM_WORLD, pcout, TimerOutput::summary, TimerOutput::wall_times) {
     D = set_up_diffusivity();
-    integral.resize(N_);
   }
 
   // Initialization.
@@ -132,7 +131,6 @@ public:
   void
   solve();
 
-  std::vector<double> integral;
   
   TimerOutput timer_output;
 
