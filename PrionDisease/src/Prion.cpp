@@ -8,14 +8,14 @@ HeatNonLinear::setup() {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
 
-    // GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
-    // GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
+    GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
+    GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
 
-    GridIn<dim> grid_in;
-    grid_in.attach_triangulation(mesh_serial);
-    const std::string mesh_file_name = "../mesh/half-brain.msh";
-    std::ifstream     grid_in_file(mesh_file_name);
-    grid_in.read_msh(grid_in_file);
+    // GridIn<dim> grid_in;
+    // grid_in.attach_triangulation(mesh_serial);
+    // const std::string mesh_file_name = "../mesh/half-brain.msh";
+    // std::ifstream     grid_in_file(mesh_file_name);
+    // grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
@@ -104,7 +104,6 @@ HeatNonLinear::assemble_system() {
   jacobian_matrix = 0.0;
   residual_vector = 0.0;
 
-
   // Value and gradient of the solution on current cell.
   std::vector<double>         solution_loc(n_q);
   std::vector<Tensor<1, dim>> solution_gradient_loc(n_q);
@@ -170,9 +169,6 @@ HeatNonLinear::assemble_system() {
                                   (alpha_loc * solution_loc[q] * (1 - solution_loc[q])) *
                                   fe_values.JxW(q);
             }
-
-         
-            
         }
 
       cell->get_dof_indices(dof_indices);
@@ -180,12 +176,10 @@ HeatNonLinear::assemble_system() {
       jacobian_matrix.add(dof_indices, cell_matrix);
       residual_vector.add(dof_indices, cell_residual);
     }
-  
-  
 
   jacobian_matrix.compress(VectorOperation::add);
   residual_vector.compress(VectorOperation::add);
-  
+
   // We apply Dirichlet boundary conditions.
   // The linear system solution is delta, which is the difference between
   // u_{n+1}^{(k+1)} and u_{n+1}^{(k)}. Both must satisfy the same Dirichlet
@@ -332,7 +326,8 @@ HeatNonLinear::solve() {
       solve_newton();
 
       timer_output.enter_subsection("Writing");
-      if(time_step % 10 == 0) output(time_step, time);
+      if (time_step % 10 == 0)
+        output(time_step, time);
       timer_output.leave_subsection();
 
       pcout << std::endl;

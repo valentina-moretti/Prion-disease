@@ -30,7 +30,6 @@
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/vector_tools.h>
 
-
 #include <fstream>
 #include <iostream>
 
@@ -93,17 +92,17 @@ public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const override {
       // for the cube mesh
-      // if (p[0] > 0.4 && p[0] < 0.6 && p[1] > 0.4 && p[1] < 0.6 && p[2] > 0.4 &&
-      //     p[2] < 0.6)
-      //   return 0.1 *
-      //          std::exp(-std::pow(30 * (p[0] - 0.5), 2) - std::pow(30 * (p[1] - 0.5), 2) -
-      //                   std::pow(30 * (p[2] - 0.5), 2));
+      if (p[0] > 0.4 && p[0] < 0.6 && p[1] > 0.4 && p[1] < 0.6 && p[2] > 0.4 &&
+          p[2] < 0.6)
+        return 0.1 *
+               std::exp(-std::pow(30 * (p[0] - 0.5), 2) - std::pow(30 * (p[1] - 0.5), 2) -
+                        std::pow(30 * (p[2] - 0.5), 2));
 
       // for the brain mesh
-      if (p[0] > 49 && p[0] < 51 && p[1] > 79 && p[1] < 81 && p[2] > 69 && p[2] < 71)
-        return 1.0 *
-               std::exp(-std::pow(2 * (p[0] - 50), 2) - std::pow(2 * (p[1] - 80), 2) -
-                        std::pow(2 * (p[2] - 70), 2));
+      // if (p[0] > 49 && p[0] < 51 && p[1] > 79 && p[1] < 81 && p[2] > 69 && p[2] < 71)
+      //   return 1.0 *
+      //          std::exp(-std::pow(2 * (p[0] - 50), 2) - std::pow(2 * (p[1] - 80), 2) -
+      //                   std::pow(2 * (p[2] - 70), 2));
 
       return 0.0;
     }
@@ -130,9 +129,6 @@ public:
   // Solve the problem.
   void
   solve();
-
-  
-  TimerOutput timer_output;
 
 protected:
   // Assemble the tangent problem.
@@ -231,6 +227,7 @@ protected:
   // System solution at previous time step.
   TrilinosWrappers::MPI::Vector solution_old;
 
+  TimerOutput timer_output;
 };
 
 #endif
