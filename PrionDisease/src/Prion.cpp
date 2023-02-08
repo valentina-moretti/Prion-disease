@@ -8,14 +8,14 @@ HeatNonLinear::setup() {
     pcout << "Initializing the mesh" << std::endl;
     Triangulation<dim> mesh_serial;
 
-    GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
-    GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
+    // GridGenerator::subdivided_hyper_cube(mesh_serial, N + 1, 0.0, 1.0, true);
+    // GridGenerator::convert_hypercube_to_simplex_mesh(mesh_serial, mesh_serial);
 
-    // GridIn<dim> grid_in;
-    // grid_in.attach_triangulation(mesh_serial);
-    // const std::string mesh_file_name = "../mesh/half-brain.msh";
-    // std::ifstream     grid_in_file(mesh_file_name);
-    // grid_in.read_msh(grid_in_file);
+    GridIn<dim> grid_in;
+    grid_in.attach_triangulation(mesh_serial);
+    const std::string mesh_file_name = "../mesh/half-brain.msh";
+    std::ifstream     grid_in_file(mesh_file_name);
+    grid_in.read_msh(grid_in_file);
 
     GridTools::partition_triangulation(mpi_size, mesh_serial);
     const auto construction_data =
@@ -304,7 +304,7 @@ HeatNonLinear::solve() {
 
     // Output the initial solution.
     timer_output.enter_subsection("Writing");
-    output(0, 0.0);
+    // output(0, 0.0);
     timer_output.leave_subsection();
     pcout << "-----------------------------------------------" << std::endl;
   }
@@ -327,7 +327,7 @@ HeatNonLinear::solve() {
 
       timer_output.enter_subsection("Writing");
       if (time_step % 10 == 0)
-        output(time_step, time);
+        // output(time_step, time);
       timer_output.leave_subsection();
 
       pcout << std::endl;
